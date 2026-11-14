@@ -34,6 +34,7 @@
 │   │   └── errorHandler.js         # 全域錯誤處理：依狀態碼對應錯誤碼與安全訊息，500 一律回「伺服器內部錯誤」
 │   ├── utils/
 │   │   ├── coupon.js               # 結帳優惠碼純邏輯：優惠碼表、門檻、折扣計算與四捨五入
+│   │   ├── orderListQuery.js       # 我的訂單列表查詢參數：狀態白名單、page/limit 驗證與上限、分頁資訊
 │   │   ├── ecpay.js                # 綠界 ECPay 工具：CheckMacValue 簽章、URL 編碼、AIO 表單產生、QueryTradeInfo 查詢
 │   │   ├── shipping.js             # 配送費用純邏輯：基本運費、免運門檻、偏遠/急件附加費
 │   │   └── validators.js           # 共用輸入驗證：非空字串、選填字串、正整數
@@ -112,6 +113,7 @@
     │   └── order-filter.test.js     # Issue C：我的訂單篩選與分頁
     ├── shipping.test.js            # Shipping 模組單元測試（13 項）
     ├── coupon.test.js              # Coupon 模組單元測試
+    ├── orderListQuery.test.js      # 訂單列表查詢參數模組單元測試
     ├── auth.test.js                # 認證 API 測試
     ├── products.test.js            # 商品 API 測試
     ├── cart.test.js                # 購物車 API 測試
@@ -182,7 +184,7 @@ server.js
 | 方法 | 路徑 | 認證 | 說明 | 檔案 |
 |------|------|------|------|------|
 | POST | `/api/orders` | JWT | 從購物車建立訂單（伺服器重算運費與總額） | orderRoutes.js |
-| GET | `/api/orders` | JWT | 自己的訂單列表 | orderRoutes.js |
+| GET | `/api/orders` | JWT | 自己的訂單列表（`status` 篩選、`page`/`limit` 分頁） | orderRoutes.js |
 | GET | `/api/orders/:id` | JWT | 訂單詳情 | orderRoutes.js |
 | PATCH | `/api/orders/:id/pay` | JWT | 模擬付款（僅 `NODE_ENV=test`，其他環境 404） | orderRoutes.js |
 | POST | `/api/orders/:id/check-payment` | JWT | 查詢綠界付款狀態 | orderRoutes.js |

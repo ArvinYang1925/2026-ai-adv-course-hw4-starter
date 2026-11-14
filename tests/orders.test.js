@@ -107,6 +107,28 @@ describe('Orders API', () => {
     expect(res.body.data.orders.length).toBeGreaterThan(0);
   });
 
+  it('should return pagination with the order list', async () => {
+    const res = await request(app)
+      .get('/api/orders?status=pending&page=1&limit=100')
+      .set('Authorization', `Bearer ${userToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.pagination).toEqual({ page: 1, limit: 50, total: 1, totalPages: 1 });
+    expect(res.body.data.orders.map(order => order.id)).toEqual([orderId]);
+  });
+
+  it('should reject invalid order list query parameters', async () => {
+    for (const query of ['?status=unknown', '?page=0', '?page=abc', '?limit=-1', '?limit=1.5', '?page=1&page=2']) {
+      const res = await request(app)
+        .get(`/api/orders${query}`)
+        .set('Authorization', `Bearer ${userToken}`);
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('data', null);
+      expect(res.body).toHaveProperty('error', 'VALIDATION_ERROR');
+    }
+  });
+
   it('should get order detail', async () => {
     const res = await request(app)
       .get(`/api/orders/${orderId}`)
