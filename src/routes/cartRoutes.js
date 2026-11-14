@@ -285,7 +285,7 @@ router.post('/', dualAuth, (req, res) => {
  *                 message:
  *                   type: string
  *       400:
- *         description: 庫存不足
+ *         description: quantity 不是正整數或庫存不足
  *       404:
  *         description: 購物車項目不存在
  */
@@ -293,9 +293,9 @@ router.patch('/:itemId', dualAuth, (req, res) => {
   const { itemId } = req.params;
   const { quantity } = req.body;
 
-  const qty = Number(quantity);
-  if (Number.isNaN(qty)) {
-    return res.status(400).json({ data: null, error: 'VALIDATION_ERROR', message: 'quantity 必須為數字' });
+  const qty = parsePositiveInteger(quantity);
+  if (qty === null) {
+    return res.status(400).json({ data: null, error: 'VALIDATION_ERROR', message: 'quantity 必須為正整數' });
   }
 
   const owner = getOwnerCondition(req);

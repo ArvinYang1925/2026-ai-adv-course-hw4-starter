@@ -11,6 +11,11 @@
 - `scripts/generate-postman.js` 產生結果固定，同一份 OpenAPI 重跑不再出現亂數差異
 
 ### Fixed
+- 免運門檻改為「滿 1,500（含）」：`calculateShipping` 由 `>` 改為 `>=`，並恢復原本被 `it.skip` 的 1,500 元邊界測試
+- `GET /api/orders/:id` 限定只能查詢自己的訂單，他人訂單回 404（修正 IDOR）
+- 綠界 QueryTradeInfo 結果缺少 `CheckMacValue` 時視為驗證失敗，不再略過驗簽
+- `PATCH /api/cart/:itemId` 改用 `parsePositiveInteger`，0、負數、小數與非數字一律回 400，不再寫入小數數量或回 500
+- 新增上述問題的回歸測試（Unit 55 → 57 項；Integration 驗簽測試新增「缺少 CheckMacValue」情境）
 - 修正 macOS 上 Vitest 測試隨機失敗（401、200 或逾時）：supertest 自開的臨時伺服器綁在 `::`、卻連到 `127.0.0.1`，可能連到同埠的其他程式。新增 `tests/setup/testServer.js` 先在 `127.0.0.1` 開好伺服器，Unit、Integration 與驗收測試皆改用它
 
 ## [1.2.0] - 2026-10-06

@@ -348,7 +348,8 @@ router.get('/', (req, res) => {
  *         description: 訂單不存在
  */
 router.get('/:id', (req, res) => {
-  const order = findOrderById(req.params.id);
+  // Scope by owner; another member's order is reported as not found
+  const order = findOrderForUser(req.params.id, req.user.userId);
 
   if (!order) {
     return res.status(404).json({ data: null, error: 'NOT_FOUND', message: '訂單不存在' });

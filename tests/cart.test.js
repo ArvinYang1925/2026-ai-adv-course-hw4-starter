@@ -110,6 +110,31 @@ describe('Cart API', () => {
     }
   });
 
+  it('should reject non-positive-integer quantity when updating a cart item', async () => {
+    const patchSessionId = 'test-session-patch-' + Date.now();
+    const addRes = await request(app)
+      .post('/api/cart')
+      .set('X-Session-Id', patchSessionId)
+      .send({ productId, quantity: 2 });
+    const itemId = addRes.body.data.id;
+
+    for (const quantity of [0, -2, 0.5, 1.9, '', null, true, '3abc', [5]]) {
+      const res = await request(app)
+        .patch(`/api/cart/${itemId}`)
+        .set('X-Session-Id', patchSessionId)
+        .send({ quantity });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toHaveProperty('data', null);
+      expect(res.body).toHaveProperty('error', 'VALIDATION_ERROR');
+    }
+
+    const cartRes = await request(app)
+      .get('/api/cart')
+      .set('X-Session-Id', patchSessionId);
+    expect(cartRes.body.data.items[0].quantity).toBe(2);
+  });
+
   it('should merge the guest cart into the member cart on login', async () => {
     const guestSessionId = 'merge-login-' + Date.now();
     const email = `merge-${Date.now()}@example.com`;

@@ -12,7 +12,8 @@ function isTradePaid(order, tradeInfo, config = ECPAY_CONFIG) {
     return false;
   }
 
-  if (tradeInfo.CheckMacValue && !verifyCheckMacValue(tradeInfo, config.hashKey, config.hashIV)) {
+  // ECPay always signs QueryTradeInfo responses, so a missing signature is a forgery
+  if (!tradeInfo.CheckMacValue || !verifyCheckMacValue(tradeInfo, config.hashKey, config.hashIV)) {
     throw new Error('QueryTradeInfo CheckMacValue mismatch');
   }
 
