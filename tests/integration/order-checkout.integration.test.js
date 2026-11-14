@@ -368,6 +368,50 @@ describe('Order checkout integration flow', () => {
     ]);
   });
 
+  it('pages a member order list stably when orders share the same created_at', async () => {
+    const member = await registerMember('order-list-member@example.com');
+    const other = await registerMember('order-list-other@example.com');
+    const insertOrder = db.prepare(
+      `INSERT INTO orders (
+         id, order_no, user_id, recipient_name, recipient_email, recipient_address,
+         subtotal, total_amount, status, created_at
+       ) VALUES (?, ?, ?, '收件人', 'r@example.com', '地址', 100, 100, ?, ?)`
+    );
+
+    // 12 orders in the same second (insertion order = age), every third one paid
+    const sameSecond = '2026-11-15 10:00:00';
+    const insertedIds = [];
+    for (let i = 0; i < 12; i++) {
+      const id = `list-order-${String(i).padStart(2, '0')}`;
+      insertOrder.run(id, `ORD-LIST-${i}`, member.user.id, i % 3 === 0 ? 'paid' : 'pending', sameSecond);
+      insertedIds.push(id);
+    }
+    insertOrder.run('list-order-older', 'ORD-LIST-OLDER', member.user.id, 'pending', '2026-11-15 09:59:59');
+    insertOrder.run('list-order-other', 'ORD-LIST-OTHER', other.user.id, 'paid', '2026-11-15 11:00:00');
+
+    const pages = [];
+    for (const page of [1, 2, 3]) {
+      const response = await request(app)
+        .get(`/api/orders?page=${page}&limit=5`)
+        .set('Authorization', `Bearer ${member.token}`);
+      expectEnvelope(response, 200);
+      expect(response.body.data.pagination).toEqual({ page, limit: 5, total: 13, totalPages: 3 });
+      pages.push(...response.body.data.orders.map(order => order.id));
+    }
+
+    // Newest first; ties resolve to the most recently inserted, with no duplicates or gaps
+    expect(pages).toEqual([...insertedIds].reverse().concat('list-order-older'));
+
+    const paid = await request(app)
+      .get('/api/orders?status=paid')
+      .set('Authorization', `Bearer ${member.token}`);
+    expectEnvelope(paid, 200);
+    expect(paid.body.data.orders.map(order => order.id)).toEqual([
+      'list-order-09', 'list-order-06', 'list-order-03', 'list-order-00'
+    ]);
+    expect(paid.body.data.pagination).toEqual({ page: 1, limit: 10, total: 4, totalPages: 1 });
+  });
+
   it('builds a valid ECPay staging form with the persisted order total', async () => {
     const { order } = await createPendingOrder(primaryProduct, 'ecpay-form@example.com');
     const response = await request(app).get(`/ecpay/payment/${order.id}`);

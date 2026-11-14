@@ -5,6 +5,10 @@
 ## [Unreleased]
 
 ### Added
+- 我的訂單篩選與分頁（Issue #3）：`GET /api/orders` 支援 `status`（`pending`/`paid`/`failed`）、`page`（預設 1）、`limit`（預設 10，最大 50）
+  - 回應改為 `{ orders, pagination: { page, limit, total, totalPages } }`，與後台訂單列表一致；前端訂單頁沿用 `data.orders`，不需修改
+  - 依建立時間由新到舊，同秒訂單以寫入順序排序，換頁穩定
+  - 參數不合法回 400 `VALIDATION_ERROR`；新增 `src/utils/orderListQuery.js` 與單元、API、Integration 測試
 - 結帳優惠碼（Issue #1）：新增 `src/utils/coupon.js`（`FLOWER100`、`SPRING10`、`SUMMER50`），`POST /api/orders` 支援選填 `couponCode`
   - 只折抵商品小計、免運門檻以折扣後小計判斷、折扣四捨五入至整數
   - `orders` 新增 `discount`、`coupon_code` 欄位（可重複執行的 migration，舊訂單回填 0 / NULL）

@@ -13,10 +13,10 @@
 ## 執行指令
 
 ```bash
-# 單元與 API 測試（8 個檔案、86 項測試）
+# 單元與 API 測試（9 個檔案、121 項測試）
 npm run test:unit
 
-# 結帳、訂單、優惠碼、DB、庫存、回滾與綠界整合測試（12 項測試）
+# 結帳、訂單、優惠碼、訂單列表分頁、DB、庫存、回滾與綠界整合測試（13 項測試）
 npm run test:integration
 
 # 已另行啟動 http://localhost:3001 後，執行真實付款 E2E
@@ -137,10 +137,11 @@ Integration Test 中有兩層防護：
 |------|------|
 | `tests/shipping.test.js` | Shipping 純函式、門檻與附加費 |
 | `tests/coupon.test.js` | Coupon 純函式：三組優惠碼、門檻邊界、四捨五入與上限、大小寫、非法輸入 |
+| `tests/orderListQuery.test.js` | 訂單列表查詢參數：狀態白名單、page/limit 預設值、上限 50、非法值與安全整數範圍、totalPages |
 | `tests/auth.test.js` | 註冊、登入、重複 Email、個人資料、非字串欄位、JSON 格式錯誤 |
 | `tests/products.test.js` | 商品列表、分頁、詳情與 404 |
 | `tests/cart.test.js` | 訪客/會員購物車 CRUD、數量驗證、登入/註冊時合併訪客購物車（含庫存上限） |
-| `tests/orders.test.js` | 建單、配送費、優惠碼欄位驗證、查詢與認證、模擬付款僅限測試環境 |
+| `tests/orders.test.js` | 建單、配送費、優惠碼欄位驗證、訂單列表分頁與參數驗證、查詢與認證、模擬付款僅限測試環境 |
 | `tests/adminProducts.test.js` | 後台商品 CRUD 與權限、刪除仍在購物車中的商品、名稱驗證 |
 | `tests/adminOrders.test.js` | 後台訂單列表、詳情與篩選 |
 
