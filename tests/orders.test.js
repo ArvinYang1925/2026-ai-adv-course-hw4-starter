@@ -129,6 +129,25 @@ describe('Orders API', () => {
     expect(Array.isArray(res.body.data.items)).toBe(true);
   });
 
+  it('should reject a non-string couponCode', async () => {
+    const res = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        recipientName: '測試收件人',
+        recipientEmail: 'recipient@example.com',
+        recipientAddress: '台北市測試路 123 號',
+        shippingMethod: 'home_delivery',
+        isRemoteArea: false,
+        isExpress: false,
+        couponCode: 100,
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toHaveProperty('data', null);
+    expect(res.body).toHaveProperty('error', 'VALIDATION_ERROR');
+  });
+
   it("should return 404 for another member's order", async () => {
     const { token: otherToken } = await registerUser();
 

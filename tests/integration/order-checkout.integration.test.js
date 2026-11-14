@@ -313,6 +313,61 @@ describe('Order checkout integration flow', () => {
     ).get(member.user.id).count).toBe(2);
   });
 
+  it('persists the coupon snapshot and sends the discounted total to ECPay', async () => {
+    const product = createProduct({ name: '整合測試優惠花束', price: 800, stock: 5 });
+    const member = await registerMember('coupon-member@example.com');
+    await addProductToCart(member.token, product.id, 2);
+
+    // 1,600 - 100 = 1,500 → free base fee; remote + express surcharges still apply
+    const response = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${member.token}`)
+      .send({ ...ORDER_PAYLOAD, couponCode: 'flower100' });
+
+    expectEnvelope(response, 201);
+    expect(response.body.data).toMatchObject({
+      subtotal: 1600,
+      discount: 100,
+      coupon_code: 'FLOWER100',
+      shipping_fee: 450,
+      total_amount: 1950
+    });
+
+    const persisted = db.prepare(
+      'SELECT subtotal, discount, coupon_code, shipping_fee, total_amount FROM orders WHERE id = ?'
+    ).get(response.body.data.id);
+    expect(persisted).toEqual({
+      subtotal: 1600,
+      discount: 100,
+      coupon_code: 'FLOWER100',
+      shipping_fee: 450,
+      total_amount: 1950
+    });
+    expect(db.prepare('SELECT stock FROM products WHERE id = ?').get(product.id).stock).toBe(3);
+
+    const form = await request(app).get(`/ecpay/payment/${response.body.data.id}`);
+    expect(parseHiddenInputs(form.text).TotalAmount).toBe('1950');
+  });
+
+  it('rejects an invalid coupon without writing an order, stock or cart change', async () => {
+    const member = await registerMember('coupon-invalid@example.com');
+    await addProductToCart(member.token, primaryProduct.id, 1);
+
+    const response = await request(app)
+      .post('/api/orders')
+      .set('Authorization', `Bearer ${member.token}`)
+      .send({ ...ORDER_PAYLOAD, couponCode: 'SUMMER50' });
+
+    expectEnvelope(response, 400);
+    expect(response.body.data).toBeNull();
+    expect(response.body.error).toBe('COUPON_EXPIRED');
+    expect(db.prepare('SELECT COUNT(*) AS count FROM orders').get().count).toBe(0);
+    expect(db.prepare('SELECT stock FROM products WHERE id = ?').get(primaryProduct.id).stock).toBe(10);
+    expect(db.prepare('SELECT quantity FROM cart_items WHERE user_id = ?').all(member.user.id)).toEqual([
+      { quantity: 1 }
+    ]);
+  });
+
   it('builds a valid ECPay staging form with the persisted order total', async () => {
     const { order } = await createPendingOrder(primaryProduct, 'ecpay-form@example.com');
     const response = await request(app).get(`/ecpay/payment/${order.id}`);
