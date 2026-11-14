@@ -2,7 +2,6 @@
 name: work-issue
 description: 依固定流程處理一個 GitHub Issue：確認標籤與作者 → 開分支 → 實作與測試 → test-runner 驗證 → 更新文件 → 開 PR → reviewer 審查 → 改標籤為 in-review 後停止。不合併 PR。以 /work-issue <編號> 呼叫。
 argument-hint: <issue 編號>
-disable-model-invocation: true
 ---
 
 # work-issue：處理 Issue #$ARGUMENTS
