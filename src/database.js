@@ -63,6 +63,8 @@ function initializeDatabase() {
       is_remote_area INTEGER NOT NULL DEFAULT 0,
       is_express INTEGER NOT NULL DEFAULT 0,
       total_amount INTEGER NOT NULL,
+      discount INTEGER NOT NULL DEFAULT 0 CHECK(discount >= 0),
+      coupon_code TEXT,
       status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'paid', 'failed')),
 
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -96,7 +98,10 @@ function initializeDatabase() {
     ['shipping_fee', 'INTEGER NOT NULL DEFAULT 0'],
     ['shipping_method', "TEXT NOT NULL DEFAULT 'home_delivery'"],
     ['is_remote_area', 'INTEGER NOT NULL DEFAULT 0'],
-    ['is_express', 'INTEGER NOT NULL DEFAULT 0']
+    ['is_express', 'INTEGER NOT NULL DEFAULT 0'],
+    // Coupon snapshot: legacy orders had no coupon, so they backfill to 0 / NULL
+    ['discount', 'INTEGER NOT NULL DEFAULT 0 CHECK(discount >= 0)'],
+    ['coupon_code', 'TEXT']
   ];
 
   for (const [column, definition] of shippingColumns) {
